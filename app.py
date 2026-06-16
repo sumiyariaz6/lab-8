@@ -34,4 +34,4 @@ if uploaded_file:
             counts[class_name] = counts.get(class_name, 0) + 1
 
         st.subheader("Object Count")
-        st.write(counts)
+        st.table(counts.items())
