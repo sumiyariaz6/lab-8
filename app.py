@@ -2,8 +2,8 @@ import streamlit as st
 from ultralytics import YOLO
 from PIL import Image
 import numpy as np
+import pandas as pd
 
-# 🎨 PAGE CONFIG (important for professional look)
 st.set_page_config(page_title="AI Object Detection", layout="centered")
 
 st.title("🔍 AI Object Detection App")
@@ -24,7 +24,6 @@ if uploaded_file:
     with col1:
         st.image(image, caption="Original Image", use_container_width=True)
 
-    # ⭐ Attractive Detect Button
     with col2:
         st.write("")
         st.write("")
@@ -35,20 +34,27 @@ if uploaded_file:
             results = model(np.array(image))
 
         annotated = results[0].plot()
-
         st.success("Detection Completed 🎉")
-
         st.image(annotated, caption="Detected Image", use_container_width=True)
 
         # ⭐ OBJECT COUNT
         counts = {}
 
+        # ⭐ CONFIDENCE DATA LIST
+        data = []
+
         for box in results[0].boxes:
             cls_id = int(box.cls[0])
             class_name = model.names[cls_id]
+            conf = float(box.conf[0])
+
+            # COUNT
             counts[class_name] = counts.get(class_name, 0) + 1
 
-        # ⭐ INTERACTIVE UI SECTION
+            # CONFIDENCE STORE
+            data.append([class_name, round(conf, 2)])
+
+        # ⭐ OBJECT COUNT UI
         st.subheader("📊 Object Analysis")
 
         col1, col2 = st.columns(2)
@@ -61,6 +67,20 @@ if uploaded_file:
             else:
                 col2.metric(label=obj.upper(), value=count)
 
-        # ⭐ INTERACTIVE TABLE (EXPANDER)
-        with st.expander("📋 Detailed Object Table (Click to Expand)"):
-            st.table(counts.items())
+        # ⭐ CONFIDENCE TABLE (PROFESSIONAL)
+        st.subheader("📈 Confidence Table")
+
+        df = pd.DataFrame(data, columns=["Object", "Confidence"])
+
+        # Sort for better UI
+        df = df.sort_values(by="Confidence", ascending=False)
+
+        st.dataframe(
+            df,
+            use_container_width=True,
+            hide_index=True
+        )
+
+        # ⭐ OPTIONAL CLEAN TABLE VIEW
+        with st.expander("📋 Simple Table View"):
+            st.table(df)
